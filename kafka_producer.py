@@ -4,16 +4,14 @@ import random
 from confluent_kafka import Producer
 from datetime import datetime
 
-# Kafka producer configuration
 kafka_config = {
     'bootstrap.servers': '',
     'client.id': '',
-    'acks': 'all',  # Ensure the broker acknowledges all messages
+    'acks': 'all',
 }
 
 producer = Producer(kafka_config)
 
-# Kafka topic
 topic = 'linpot-data'
 
 def generate_message():
