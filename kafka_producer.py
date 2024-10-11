@@ -1,18 +1,32 @@
 import json
 import time
 import random
+import os
 from confluent_kafka import Producer
 from datetime import datetime
+from dotenv import load_dotenv
 
+load_dotenv()
+
+#Azure Events Hub Config
+event_hub_namespace = os.getenv("EVENT_HUB_NAMESPACE")
+event_hub_name = os.getenv("EVENT_HUB_NAME")
+shared_access_key_name = os.getenv("SHARED_ACCESS_KEY_NAME")
+shared_access_key = os.getenv("SHARED_ACCESS_KEY")
+
+#Kafka Config
 kafka_config = {
-    'bootstrap.servers': '',
-    'client.id': '',
+    'bootstrap.servers': f"{event_hub_namespace}:9093",
+    'client.id': 'linpot-producer',
+    'security.protocol': 'SASL_SSL',
+    'sasl.mechanism': 'PLAIN',
+    'sasl.username': f'$ConnectionString',
+    'sasl.password': f'Endpoint=sb://{event_hub_namespace}/;SharedAccessKeyName={shared_access_key_name};SharedAccessKey={shared_access_key};EntityPath={event_hub_name}',
     'acks': 'all',
 }
 
 producer = Producer(kafka_config)
-
-topic = 'linpot-data'
+topic = event_hub_name
 
 def generate_message():
     current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
@@ -59,11 +73,10 @@ def send_messages(batch_size=10, interval=5):
     except KeyboardInterrupt:
         print('Interrupted by user')
     finally:
-        # Wait for any outstanding messages to be delivered and delivery report callbacks to be triggered
         print('Flushing producer...')
         producer.flush()
 
 if __name__ == '__main__':
-    print("Starting Kafka Producer...")
+    print("Starting Kafka Producer for Azure Event Hubs...")
     send_messages(batch_size=10, interval=2)  # 10 messages, 2 seconds apart
     print("Producer finished.")
